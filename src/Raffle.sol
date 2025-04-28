@@ -21,6 +21,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         OPEN,
         CALCULATING
     } // Enum for the raffle state
+
     // State variables
     uint256 private immutable i_entranceFee; // Fee to enter the raffle
     uint256 private immutable i_interval; // Time interval for the raffle (in seconds)
