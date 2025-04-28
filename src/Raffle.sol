@@ -22,7 +22,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint64 private immutable i_subscriptionId; // Subscription ID for the VRF
     uint32 private immutable i_callbackGasLimit; // Gas limit for the callback function
     bool private immutable i_enableNativePayment; // Flag to enable native payment
-    address payable[] private s_players; // Array to store players' addresses
+    address payable[] private s_players; // Array to store players'
+    address private s_recentWinner; // Address of the most recent winner
 
     // constants
     uint16 private constant REQUEST_CONFIRMATIONS = 2; // Number of confirmations required for the VRF request
@@ -43,7 +44,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint64 subscriptionId,
         uint32 callbackGasLimit,
         bool enableNativePayment
-    ) VRFConsumerBaseV2Plus(0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B) {
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee; // Set the entrance fee
         i_interval = interval; // Set the time interval for the raffle
         s_lastTimeStamp = block.timestamp; // Initialize the last timestamp to the current block timestamp
@@ -87,6 +88,20 @@ contract Raffle is VRFConsumerBaseV2Plus {
         );
     }
 
+    function fulfillRandomWords(
+        uint256 /** requestId */,
+        uint256[] calldata randomWords
+    ) internal override {
+        uint256 winnerIndex = randomWords[0] % s_players.length; // Get a random index for the winner
+        address payable winner = s_players[winnerIndex]; // Get the winner's address
+        s_recentWinner = winner; // Set the recent
+        (bool success, ) = winner.call{value: address(this).balance}(""); // Transfer the balance to the
+        if (!success) {
+            revert("Transfer failed"); // Revert if the transfer fails
+        }
+        s_players = new address payable[](0); // Reset the players array for the next raffle
+    }
+
     // getters
 
     function getEntranceFee() public view returns (uint256) {
@@ -97,8 +112,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return i_interval; // Return the time interval for the raffle
     }
 
-    function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] calldata randomWords
-    ) internal virtual override {}
+    function getPlayers() public view returns (address payable[] memory) {
+        return s_players; // Return the array of players' addresses
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return s_recentWinner; // Return the address of the most recent winner
+    }
 }
