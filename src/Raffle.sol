@@ -1,21 +1,57 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+
 /***
  * @title Raffle
- * @author kavinda
+ * @author kavinda rathnayake
  * @notice This contract is a simple implementation of a raffle system.
  * @dev The contract allows users to enter a raffle by sending Ether, and the winner is selected randomly.
  */
-contract Raffle {
+contract Raffle is VRFConsumerBaseV2Plus {
     // custom errors
     error Raffle__NotEnoughETHEntered(); // Error for insufficient ETH sent
     // State variables
     uint256 private immutable i_entranceFee; // Fee to enter the raffle
+    uint256 private immutable i_interval; // Time interval for the raffle (in seconds)
+    uint256 private s_lastTimeStamp; // Timestamp of the last raffle
+    address private immutable i_vrfCoordinator; // Address of the VRF coordinator
+    bytes32 private immutable i_keyHash; // Key hash for the VRF
+    uint64 private immutable i_subscriptionId; // Subscription ID for the VRF
+    uint32 private immutable i_callbackGasLimit; // Gas limit for the callback function
+    bool private immutable i_enableNativePayment; // Flag to enable native payment
     address payable[] private s_players; // Array to store players' addresses
 
-    constructor(uint256 entranceFee) {
+    // constants
+    uint16 private constant REQUEST_CONFIRMATIONS = 2; // Number of confirmations required for the VRF request
+    uint32 private constant NUM_WORDS = 1; // Number of random words to request
+
+    //events
+    event RaffleEnter(address indexed player); // Event emitted when a player enters the raffle
+
+    /**
+     * HARDCODED FOR SEPOLIA
+     * COORDINATOR: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B
+     */
+    constructor(
+        uint256 entranceFee,
+        uint256 interval,
+        address vrfCoordinator,
+        bytes32 keyHash,
+        uint64 subscriptionId,
+        uint32 callbackGasLimit,
+        bool enableNativePayment
+    ) VRFConsumerBaseV2Plus(0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B) {
         i_entranceFee = entranceFee; // Set the entrance fee
+        i_interval = interval; // Set the time interval for the raffle
+        s_lastTimeStamp = block.timestamp; // Initialize the last timestamp to the current block timestamp
+        i_vrfCoordinator = vrfCoordinator; // Set the VRF coordinator address
+        i_keyHash = keyHash; // Set the key hash for the VRF
+        i_subscriptionId = subscriptionId; // Set the subscription ID for the VRF
+        i_callbackGasLimit = callbackGasLimit; // Set the gas limit for the callback function
+        i_enableNativePayment = enableNativePayment; // Set the flag to enable native payment
     }
 
     function enterRaffle() public payable {
@@ -25,13 +61,44 @@ contract Raffle {
         }
         // Add the player's address to the players array
         s_players.push(payable(msg.sender)); // Store the player's address
+        // emit the RaffleEnter event
+        emit RaffleEnter(msg.sender); // Emit the event
     }
 
-    function pickWinner() public {}
+    function pickWinner() public {
+        // get the timestamps of the last block
+        if ((block.timestamp - s_lastTimeStamp) < i_interval) {
+            revert("Not enough time has passed since the last raffle"); // Revert if not enough time has passed
+        }
+
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: i_keyHash,
+                subId: i_subscriptionId,
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: NUM_WORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    VRFV2PlusClient.ExtraArgsV1({
+                        nativePayment: i_enableNativePayment
+                    })
+                )
+            })
+        );
+    }
 
     // getters
 
     function getEntranceFee() public view returns (uint256) {
         return i_entranceFee; // Return the entrance fee
     }
+
+    function getInterval() public view returns (uint256) {
+        return i_interval; // Return the time interval for the raffle
+    }
+
+    function fulfillRandomWords(
+        uint256 requestId,
+        uint256[] calldata randomWords
+    ) internal virtual override {}
 }
