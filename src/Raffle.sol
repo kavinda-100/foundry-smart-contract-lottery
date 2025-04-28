@@ -15,6 +15,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughETHEntered(); // Error for insufficient ETH
     error Raffle__TransferFailed(); // Error for transfer failure
     error Raffle__NotOpen(); // Error for when the raffle is not open
+
+    // enums/Type declarations
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    } // Enum for the raffle state
     // State variables
     uint256 private immutable i_entranceFee; // Fee to enter the raffle
     uint256 private immutable i_interval; // Time interval for the raffle (in seconds)
@@ -26,6 +32,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     bool private immutable i_enableNativePayment; // Flag to enable native payment
     address payable[] private s_players; // Array to store players'
     address private s_recentWinner; // Address of the most recent winner
+    RaffleState private s_raffleState; // Current state of the raffle
 
     // constants
     uint16 private constant REQUEST_CONFIRMATIONS = 2; // Number of confirmations required for the VRF request
@@ -33,6 +40,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     //events
     event RaffleEnter(address indexed player); // Event emitted when a player enters the raffle
+    event WinnerPicked(address indexed winner); // Event emitted when a winner is picked
 
     /**
      * HARDCODED FOR SEPOLIA
@@ -55,12 +63,16 @@ contract Raffle is VRFConsumerBaseV2Plus {
         i_subscriptionId = subscriptionId; // Set the subscription ID for the VRF
         i_callbackGasLimit = callbackGasLimit; // Set the gas limit for the callback function
         i_enableNativePayment = enableNativePayment; // Set the flag to enable native payment
+        s_raffleState = RaffleState.OPEN; // Initialize the raffle state to OPEN
     }
 
     function enterRaffle() public payable {
         // Check if the sent value is less than the entrance fee
         if (msg.value < i_entranceFee) {
             revert Raffle__NotEnoughETHEntered(); // Revert with custom error
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__NotOpen(); // Revert if the raffle is not open
         }
         // Add the player's address to the players array
         s_players.push(payable(msg.sender)); // Store the player's address
@@ -74,6 +86,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
             revert Raffle__NotOpen(); // Revert if the raffle is not open
         }
 
+        s_raffleState = RaffleState.CALCULATING; // Set the raffle state to CALCULATING
         uint256 requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: i_keyHash,
@@ -97,11 +110,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 winnerIndex = randomWords[0] % s_players.length; // Get a random index for the winner
         address payable winner = s_players[winnerIndex]; // Get the winner's address
         s_recentWinner = winner; // Set the recent
+        s_raffleState = RaffleState.OPEN; // Set the raffle state back to OPEN
         (bool success, ) = winner.call{value: address(this).balance}(""); // Transfer the balance to the
         if (!success) {
             revert Raffle__TransferFailed(); // Revert if the transfer fails
         }
         s_players = new address payable[](0); // Reset the players array for the next raffle
+        s_lastTimeStamp = block.timestamp; // Update the last timestamp to the current block timestamps
+
+        emit WinnerPicked(winner); // Emit the event with the winner's address
     }
 
     // getters
