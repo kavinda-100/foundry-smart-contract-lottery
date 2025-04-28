@@ -16,6 +16,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughETHEntered(); // Error for insufficient ETH
     error Raffle__TransferFailed(); // Error for transfer failure
     error Raffle__NotOpen(); // Error for when the raffle is not open
+    error Raffle__UpkeepNotNeeded(
+        uint256 currentBalance,
+        uint256 numPlayers,
+        uint256 raffleState
+    ); // Error for when upkeep is not needed
 
     // enums/Type declarations
     enum RaffleState {
@@ -82,10 +87,30 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RaffleEnter(msg.sender); // Emit the event
     }
 
-    function pickWinner() public {
-        // get the timestamps of the last block
-        if ((block.timestamp - s_lastTimeStamp) < i_interval) {
-            revert Raffle__NotOpen(); // Revert if the raffle is not open
+    /**
+     * @dev This is the function that the Chainlink Keeper nodes call to check if upkeep is needed.
+     * It returns a boolean value indicating whether upkeep is needed and any additional data required for the upkeep.
+     */
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+        bool timeHasPassed = (block.timestamp - s_lastTimeStamp) > i_interval;
+        bool isOpen = (RaffleState.OPEN == s_raffleState);
+        bool hasPlayers = (s_players.length > 0); // Check if there are players in the raffle
+        bool hasBalance = (address(this).balance > 0); // Check if the contract has a balance
+        upkeepNeeded = (timeHasPassed && isOpen && hasPlayers && hasBalance); // Determine if upkeep is needed
+        return (upkeepNeeded, "0x0"); // Return the upkeep status and empty performData
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external {
+        // Check if upkeep is needed
+        (bool upkeepNeeded, ) = checkUpkeep(""); // Call the checkUpkeep function
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            ); // Revert if upkeep is not needed
         }
 
         s_raffleState = RaffleState.CALCULATING; // Set the raffle state to CALCULATING
@@ -114,12 +139,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
         address payable winner = s_players[winnerIndex]; // Get the winner's address
         s_recentWinner = winner; // Set the recent
         s_raffleState = RaffleState.OPEN; // Set the raffle state back to OPEN
+        s_players = new address payable[](0); // Reset the players array for the next raffle
+        s_lastTimeStamp = block.timestamp; // Update the last timestamp to the current block timestamps
         (bool success, ) = winner.call{value: address(this).balance}(""); // Transfer the balance to the
         if (!success) {
             revert Raffle__TransferFailed(); // Revert if the transfer fails
         }
-        s_players = new address payable[](0); // Reset the players array for the next raffle
-        s_lastTimeStamp = block.timestamp; // Update the last timestamp to the current block timestamps
 
         emit WinnerPicked(winner); // Emit the event with the winner's address
     }
