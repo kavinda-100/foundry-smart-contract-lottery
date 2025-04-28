@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {Script} from "forge-std/Script.sol";
+import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
 
 contract HelperConfig is Script {
     // struct to hold the configuration for the network
@@ -42,5 +43,27 @@ contract HelperConfig is Script {
         if (activeNetworkConfig.vrfCoordinator != address(0)) {
             return activeNetworkConfig; // Return the existing configuration if it exists
         }
+        uint96 baseFee = 0.25 ether; // Base fee for the mock VRF coordinator (0.25 LINK per request)
+        uint96 gasPriceLink = 1e9; // Gas price for LINK token (1 Gwei LINK per gas)
+
+        vm.startBroadcast();
+
+        VRFCoordinatorV2Mock vrfCoordinator = new VRFCoordinatorV2Mock(
+            baseFee,
+            gasPriceLink
+        );
+
+        vm.startBroadcast();
+
+        return
+            NetworkConfig({
+                entranceFee: 0.01 ether,
+                interval: 30, // 30 seconds
+                vrfCoordinator: address(vrfCoordinator),
+                keyHash: 0xAA77729D3466CA35AE8D28B9B7C701C2E4A2A1E5F4F4F4F4F4F4F4F4F4F4F4F4,
+                subscriptionId: 0, // Replace with your subscription ID
+                callbackGasLimit: 500000, // Adjust as needed
+                enableNativePayment: false // Set to true if you want to accept native payments
+            });
     }
 }
