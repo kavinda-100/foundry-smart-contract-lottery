@@ -12,7 +12,9 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  */
 contract Raffle is VRFConsumerBaseV2Plus {
     // custom errors
-    error Raffle__NotEnoughETHEntered(); // Error for insufficient ETH sent
+    error Raffle__NotEnoughETHEntered(); // Error for insufficient ETH
+    error Raffle__TransferFailed(); // Error for transfer failure
+    error Raffle__NotOpen(); // Error for when the raffle is not open
     // State variables
     uint256 private immutable i_entranceFee; // Fee to enter the raffle
     uint256 private immutable i_interval; // Time interval for the raffle (in seconds)
@@ -69,7 +71,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function pickWinner() public {
         // get the timestamps of the last block
         if ((block.timestamp - s_lastTimeStamp) < i_interval) {
-            revert("Not enough time has passed since the last raffle"); // Revert if not enough time has passed
+            revert Raffle__NotOpen(); // Revert if the raffle is not open
         }
 
         uint256 requestId = s_vrfCoordinator.requestRandomWords(
@@ -97,7 +99,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_recentWinner = winner; // Set the recent
         (bool success, ) = winner.call{value: address(this).balance}(""); // Transfer the balance to the
         if (!success) {
-            revert("Transfer failed"); // Revert if the transfer fails
+            revert Raffle__TransferFailed(); // Revert if the transfer fails
         }
         s_players = new address payable[](0); // Reset the players array for the next raffle
     }
