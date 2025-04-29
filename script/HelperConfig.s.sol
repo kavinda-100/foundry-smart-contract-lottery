@@ -14,6 +14,7 @@ contract HelperConfig is Script {
         uint64 subscriptionId;
         uint32 callbackGasLimit;
         bool enableNativePayment;
+        address linkToken; // Address of the LINK token contract
     }
 
     NetworkConfig public activeNetworkConfig; // variable to hold the active network configuration
@@ -35,7 +36,8 @@ contract HelperConfig is Script {
                 keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
                 subscriptionId: 0, // Replace with your subscription ID
                 callbackGasLimit: 500000, // Adjust as needed
-                enableNativePayment: false // Set to true if you want to accept native payments
+                enableNativePayment: false, // Set to true if you want to accept native payments
+                linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789
             });
     }
 
@@ -63,7 +65,8 @@ contract HelperConfig is Script {
                 keyHash: 0xAA77729D3466CA35AE8D28B9B7C701C2E4A2A1E5F4F4F4F4F4F4F4F4F4F4F4F4,
                 subscriptionId: 0, // Replace with your subscription ID
                 callbackGasLimit: 500000, // Adjust as needed
-                enableNativePayment: false // Set to true if you want to accept native payments
+                enableNativePayment: false, // Set to true if you want to accept native payments
+                linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789
             });
     }
 }

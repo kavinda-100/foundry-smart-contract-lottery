@@ -10,7 +10,7 @@ contract Interactions is Script {
     function createSubscriptionUsingConfig() public returns (uint64) {
         HelperConfig helperConfig = new HelperConfig();
         // Get the configuration for the active network
-        (, , address vrfCoordinator, , , , ) = helperConfig
+        (, , address vrfCoordinator, , , , , ) = helperConfig
             .activeNetworkConfig();
         // Create a new subscription using the VRF coordinator address
         return createSubscription(vrfCoordinator);
@@ -36,4 +36,25 @@ contract Interactions is Script {
         uint64 subscriptionId = createSubscriptionUsingConfig();
         return subscriptionId;
     }
+}
+
+contract FundSubscriptions is Script {
+    uint96 public constant FUND_AMOUNT = 3 ether; // Amount to fund the subscription
+
+    function createSubscriptionUsingConfig() public returns (uint64) {
+        HelperConfig helperConfig = new HelperConfig();
+        // Get the configuration for the active network
+        (
+            ,
+            ,
+            address vrfCoordinator,
+            ,
+            uint64 subscriptionId,
+            ,
+            ,
+
+        ) = helperConfig.activeNetworkConfig();
+    }
+
+    function run() external {}
 }

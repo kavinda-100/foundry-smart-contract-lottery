@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {Interactions} from "./Interactions.s.sol";
@@ -18,8 +19,11 @@ contract DeployRaffle is Script {
             bytes32 keyHash,
             uint64 subscriptionId,
             uint32 callbackGasLimit,
-            bool enableNativePayment
+            bool enableNativePayment,
+            address linkToken
         ) = helperConfig.activeNetworkConfig();
+
+        console.log("linkToken in DeployRaffle: ", linkToken);
 
         // Check if the subscription ID is 0, indicating that a new subscription needs to be created
         if (subscriptionId == 0) {

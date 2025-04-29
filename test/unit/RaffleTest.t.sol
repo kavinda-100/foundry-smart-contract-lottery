@@ -18,6 +18,7 @@ contract RaffleTest is Test {
     uint64 subscriptionId; // Subscription ID for the VRF
     uint32 callbackGasLimit; // Gas limit for the callback function
     bool enableNativePayment; // Flag to enable native payment
+    address linkToken; // Address of the LINK token contract
 
     // fake data for testing
     address public PLAYER = makeAddr("player"); // Fake player address
@@ -36,7 +37,8 @@ contract RaffleTest is Test {
             keyHash,
             subscriptionId,
             callbackGasLimit,
-            enableNativePayment
+            enableNativePayment,
+            linkToken
         ) = helperConfig.activeNetworkConfig();
 
         // Fund the player with some ether
