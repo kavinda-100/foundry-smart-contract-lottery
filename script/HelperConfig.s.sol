@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import {Script} from "forge-std/Script.sol";
 import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol"; // Import the LinkToken contract;
 
 contract HelperConfig is Script {
     // struct to hold the configuration for the network
@@ -55,6 +56,7 @@ contract HelperConfig is Script {
             gasPriceLink
         );
 
+        LinkToken linkToken = new LinkToken(); // Deploy the LINK token contract
         vm.stopBroadcast();
 
         return
@@ -66,7 +68,7 @@ contract HelperConfig is Script {
                 subscriptionId: 0, // Replace with your subscription ID
                 callbackGasLimit: 500000, // Adjust as needed
                 enableNativePayment: false, // Set to true if you want to accept native payments
-                linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+                linkToken: address(linkToken) // Address of the LINK token contract
             });
     }
 }

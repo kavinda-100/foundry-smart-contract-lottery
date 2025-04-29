@@ -52,7 +52,7 @@ contract FundSubscriptions is Script {
             uint64 subscriptionId,
             ,
             ,
-
+            address linkToken
         ) = helperConfig.activeNetworkConfig();
     }
 
