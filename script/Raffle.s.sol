@@ -6,7 +6,7 @@ import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
 contract DeployRaffle is Script {
-    function run() external returns (Raffle) {
+    function run() external returns (Raffle, HelperConfig) {
         // Get the active network configuration
         HelperConfig helperConfig = new HelperConfig();
         // Get the configuration for the active network
@@ -32,6 +32,6 @@ contract DeployRaffle is Script {
         );
         vm.stopBroadcast();
 
-        return raffle;
+        return (raffle, helperConfig);
     }
 }
