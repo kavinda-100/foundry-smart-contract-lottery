@@ -96,14 +96,6 @@ contract FundSubscriptions is Script {
 }
 
 contract AddConsumer is Script {
-    function run() external {
-        address contractAddress = DevOpsTools.get_most_recent_deployment(
-            "Raffle",
-            block.chainid
-        );
-        addConsumerUsingConfig(contractAddress);
-    }
-
     function addConsumerUsingConfig(address contractAddress) public {
         HelperConfig helperConfig = new HelperConfig();
         // Get the configuration for the active network
@@ -136,5 +128,13 @@ contract AddConsumer is Script {
             contractAddress
         );
         vm.stopBroadcast();
+    }
+
+    function run() external {
+        address contractAddress = DevOpsTools.get_most_recent_deployment(
+            "Raffle",
+            block.chainid
+        );
+        addConsumerUsingConfig(contractAddress);
     }
 }

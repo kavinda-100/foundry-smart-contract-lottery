@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
-import {Interactions} from "./Interactions.s.sol";
+import {Interactions, FundSubscriptions, AddConsumer} from "./Interactions.s.sol";
 
 contract DeployRaffle is Script {
     function run() external returns (Raffle, HelperConfig) {
@@ -23,13 +23,18 @@ contract DeployRaffle is Script {
             address linkToken
         ) = helperConfig.activeNetworkConfig();
 
-        console.log("linkToken in DeployRaffle: ", linkToken);
-
         // Check if the subscription ID is 0, indicating that a new subscription needs to be created
         if (subscriptionId == 0) {
             // Create a new subscription using the Interactions contract
             Interactions interactions = new Interactions();
             subscriptionId = interactions.createSubscription(vrfCoordinator);
+            // Fund the subscription using the FundSubscriptions contract
+            FundSubscriptions fundSubscriptions = new FundSubscriptions();
+            fundSubscriptions.fundSubscriptions(
+                vrfCoordinator,
+                subscriptionId,
+                linkToken
+            );
         }
 
         vm.startBroadcast();
@@ -45,6 +50,14 @@ contract DeployRaffle is Script {
         );
 
         vm.stopBroadcast();
+
+        // Add a consumer to the subscription using the AddConsumer contract
+        AddConsumer addConsumer = new AddConsumer();
+        addConsumer.addConsumer(
+            address(raffle),
+            vrfCoordinator,
+            subscriptionId
+        );
 
         return (raffle, helperConfig);
     }
