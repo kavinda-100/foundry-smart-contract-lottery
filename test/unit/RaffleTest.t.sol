@@ -36,4 +36,38 @@ contract RaffleTest is Test {
             enableNativePayment
         ) = helperConfig.activeNetworkConfig();
     }
+
+    function testJust() external pure {
+        // This is a placeholder test function that does nothing.
+        // It can be used to check if the test suite is running correctly.
+        assert(true); // Always pass
+    }
 }
+
+// function setUp() external {
+//         // Initialize the helperConfig and get the active network configuration
+//         helperConfig = new HelperConfig();
+//         (
+//             entranceFee,
+//             interval,
+//             vrfCoordinator,
+//             keyHash,
+//             subscriptionId,
+//             callbackGasLimit,
+//             enableNativePayment
+//         ) = helperConfig.activeNetworkConfig();
+
+//         // Deploy the Raffle contract directly
+//         raffle = new Raffle(
+//             entranceFee,
+//             interval,
+//             vrfCoordinator,
+//             keyHash,
+//             subscriptionId,
+//             callbackGasLimit,
+//             enableNativePayment
+//         );
+
+//         // Fund the PLAYER address with the starting balance
+//         vm.deal(PLAYER, STARTING_USER_BALANCE);
+//     }

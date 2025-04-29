@@ -21,6 +21,7 @@ contract DeployRaffle is Script {
         ) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
+
         Raffle raffle = new Raffle(
             entranceFee,
             interval,
@@ -30,6 +31,7 @@ contract DeployRaffle is Script {
             callbackGasLimit,
             enableNativePayment
         );
+
         vm.stopBroadcast();
 
         return (raffle, helperConfig);

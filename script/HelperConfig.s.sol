@@ -53,7 +53,7 @@ contract HelperConfig is Script {
             gasPriceLink
         );
 
-        vm.startBroadcast();
+        vm.stopBroadcast();
 
         return
             NetworkConfig({
