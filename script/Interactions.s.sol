@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol"; // Import the LinkToken contract
 
 contract Interactions is Script {
     function createSubscriptionUsingConfig() public returns (uint64) {
@@ -41,7 +42,7 @@ contract Interactions is Script {
 contract FundSubscriptions is Script {
     uint96 public constant FUND_AMOUNT = 3 ether; // Amount to fund the subscription
 
-    function createSubscriptionUsingConfig() public returns (uint64) {
+    function fundSubscriptionUsingConfig() public {
         HelperConfig helperConfig = new HelperConfig();
         // Get the configuration for the active network
         (
@@ -54,7 +55,41 @@ contract FundSubscriptions is Script {
             ,
             address linkToken
         ) = helperConfig.activeNetworkConfig();
+
+        fundSubscriptions(vrfCoordinator, subscriptionId, linkToken);
     }
 
-    function run() external {}
+    function fundSubscriptions(
+        address vrfCoordinator,
+        uint64 subscriptionId,
+        address linkToken
+    ) public {
+        console.log("Funding subscription on chainId: ", block.chainid);
+        console.log("Funding subscription ID: ", subscriptionId);
+        console.log("Using vrfCoordinator: ", vrfCoordinator);
+        console.log("Funding subscription with linkToken: ", linkToken);
+
+        if (block.chainid == 31337) {
+            vm.startBroadcast();
+            // Fund the subscription with LINK tokens
+            VRFCoordinatorV2Mock(vrfCoordinator).fundSubscription(
+                subscriptionId,
+                FUND_AMOUNT
+            );
+            vm.stopBroadcast();
+        } else {
+            vm.startBroadcast();
+            LinkToken(linkToken).transferAndCall(
+                vrfCoordinator,
+                FUND_AMOUNT,
+                abi.encode(subscriptionId)
+            );
+
+            vm.stopBroadcast();
+        }
+    }
+
+    function run() external {
+        fundSubscriptionUsingConfig();
+    }
 }
