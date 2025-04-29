@@ -86,4 +86,22 @@ contract RaffleTest is Test {
         emit RaffleEnter(PLAYER); // Emit the RaffleEnter event
         raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
     }
+
+    /**
+     *  @dev This test ensures that the raffle can only be entered when it is open.
+     *  It uses the `vm.expectRevert` function to expect a revert with the custom error `Raffle__NotOpen`.
+     */
+    function testCanNotEnterWhenRaffleIsCalculating() external {
+        // Arrange
+        vm.prank(PLAYER); // Start prank as the player
+        raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
+
+        // Act & Assert
+        vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
+        vm.roll(block.number + 1); // Move to the next block
+        raffle.performUpkeep(""); // Attempt to perform upkeep (should revert)
+        vm.expectRevert(Raffle.Raffle__NotOpen.selector); // Expect revert with custom error
+        vm.prank(PLAYER); // Start prank as the player
+        raffle.enterRaffle{value: entranceFee}(); // Attempt to enter the raffle again (should revert)
+    }
 }
