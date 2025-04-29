@@ -34,7 +34,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint256 private s_lastTimeStamp; // Timestamp of the last raffle
     address private immutable i_vrfCoordinator; // Address of the VRF coordinator
     bytes32 private immutable i_keyHash; // Key hash for the VRF
-    uint64 private immutable i_subscriptionId; // Subscription ID for the VRF
+    uint256 private immutable i_subscriptionId; // Subscription ID for the VRF
     uint32 private immutable i_callbackGasLimit; // Gas limit for the callback function
     bool private immutable i_enableNativePayment; // Flag to enable native payment
     address payable[] private s_players; // Array to store players'
@@ -58,7 +58,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 interval,
         address vrfCoordinator,
         bytes32 keyHash,
-        uint64 subscriptionId,
+        uint256 subscriptionId,
         uint32 callbackGasLimit,
         bool enableNativePayment
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
@@ -75,7 +75,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function enterRaffle() public payable {
         // Check if the sent value is less than the entrance fee
-        if (msg.value < i_entranceFee) {
+        if (msg.value <= i_entranceFee) {
             revert Raffle__NotEnoughETHEntered(); // Revert with custom error
         }
         if (s_raffleState != RaffleState.OPEN) {

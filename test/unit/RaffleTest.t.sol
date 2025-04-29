@@ -15,7 +15,7 @@ contract RaffleTest is Test {
     uint256 interval; // Time interval for the raffle (in seconds)
     address vrfCoordinator; // Address of the VRF coordinator
     bytes32 keyHash; // Key hash for the VRF
-    uint64 subscriptionId; // Subscription ID for the VRF
+    uint256 subscriptionId; // Subscription ID for the VRF
     uint32 callbackGasLimit; // Gas limit for the callback function
     bool enableNativePayment; // Flag to enable native payment
     address linkToken; // Address of the LINK token contract
@@ -23,6 +23,7 @@ contract RaffleTest is Test {
     // fake data for testing
     address public PLAYER = makeAddr("player"); // Fake player address
     uint256 public constant STARTING_USER_BALANCE = 10 ether; // Starting balance for the player
+    uint256 public constant ENTRANCE_FEE = 0.05 ether; // Entrance fee for the raffle
 
     // Events for the tests
     event RaffleEnter(address indexed player); // Event emitted when a player enters the raffle
@@ -68,7 +69,7 @@ contract RaffleTest is Test {
         vm.prank(PLAYER); // Start prank as the player
 
         // Act
-        raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
         address player = raffle.getSinglePlayer(0); // Get the first player from the raffle
 
         // Assert
@@ -86,7 +87,7 @@ contract RaffleTest is Test {
         // Act & Assert
         vm.expectEmit(true, false, false, false, address(raffle)); // Expect emit with all parameters set to true
         emit RaffleEnter(PLAYER); // Emit the RaffleEnter event
-        raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
     }
 
     /**
@@ -96,14 +97,16 @@ contract RaffleTest is Test {
     function testCanNotEnterWhenRaffleIsCalculating() external {
         // Arrange
         vm.prank(PLAYER); // Start prank as the player
-        raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
 
-        // Act & Assert
+        // Act
         vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
         vm.roll(block.number + 1); // Move to the next block
-        raffle.performUpkeep(""); // Attempt to perform upkeep (should revert)
+        raffle.performUpkeep(""); // Perform upkeep to change the state to CALCULATING
+
+        // Assert
         vm.expectRevert(Raffle.Raffle__NotOpen.selector); // Expect revert with custom error
         vm.prank(PLAYER); // Start prank as the player
-        raffle.enterRaffle{value: entranceFee}(); // Attempt to enter the raffle again (should revert)
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Attempt to enter the raffle again (should revert)
     }
 }
