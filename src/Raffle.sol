@@ -163,6 +163,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return s_players; // Return the array of players' addresses
     }
 
+    function getSinglePlayer(uint256 index) public view returns (address) {
+        return s_players[index]; // Return the address of a single player at the given index
+    }
+
     function getRecentWinner() public view returns (address) {
         return s_recentWinner; // Return the address of the most recent winner
     }

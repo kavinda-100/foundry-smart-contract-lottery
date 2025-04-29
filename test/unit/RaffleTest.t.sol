@@ -35,8 +35,15 @@ contract RaffleTest is Test {
             callbackGasLimit,
             enableNativePayment
         ) = helperConfig.activeNetworkConfig();
+
+        // Fund the player with some ether
+        vm.deal(PLAYER, STARTING_USER_BALANCE); // Give the player some ether
     }
 
+    /**
+     *  @dev This test ensures that user can't enter the raffle without sending enough ETH.
+     *  It uses the `vm.expectRevert` function to expect a revert with the custom error `Raffle__NotEnoughETHEntered`.
+     */
     function testRaffleRevertWhenYouPayNotEnoughETH() external {
         // Arrange
         vm.prank(PLAYER); // Start prank as the player
@@ -46,5 +53,20 @@ contract RaffleTest is Test {
         raffle.enterRaffle(); // Attempt to enter the raffle with insufficient ETH
 
         vm.stopPrank(); // Stop prank
+    }
+
+    /**
+     *  @dev This test ensures that contract records players when they enter the raffle.
+     */
+    function testRaffleRecordPlayersWhenTheyEnter() external {
+        // Arrange
+        vm.prank(PLAYER); // Start prank as the player
+
+        // Act
+        raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
+        address player = raffle.getSinglePlayer(0); // Get the first player from the raffle
+
+        // Assert
+        assertEq(player, PLAYER); // Check if the player address matches the expected address
     }
 }
