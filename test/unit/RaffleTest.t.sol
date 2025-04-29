@@ -23,6 +23,9 @@ contract RaffleTest is Test {
     address public PLAYER = makeAddr("player"); // Fake player address
     uint256 public constant STARTING_USER_BALANCE = 10 ether; // Starting balance for the player
 
+    // Events for the tests
+    event RaffleEnter(address indexed player); // Event emitted when a player enters the raffle
+
     function setUp() external {
         DeployRaffle deployRaffle = new DeployRaffle();
         (raffle, helperConfig) = deployRaffle.run();
@@ -68,5 +71,19 @@ contract RaffleTest is Test {
 
         // Assert
         assertEq(player, PLAYER); // Check if the player address matches the expected address
+    }
+
+    /**
+     *  @dev This test ensures that contract emit the event when a player enters the raffle.
+     *  It uses the `vm.expectEmit` function to expect the `RaffleEnter` event to be emitted with the correct parameters.
+     */
+    function testEmitEventWhenPlayerEntersRaffle() external {
+        // Arrange
+        vm.prank(PLAYER); // Start prank as the player
+
+        // Act & Assert
+        vm.expectEmit(true, false, false, false, address(raffle)); // Expect emit with all parameters set to true
+        emit RaffleEnter(PLAYER); // Emit the RaffleEnter event
+        raffle.enterRaffle{value: entranceFee}(); // Player enters the raffle
     }
 }
