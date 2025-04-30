@@ -124,4 +124,23 @@ contract RaffleTest is Test {
         // Assert
         assert(!upkeepNeeded); // Check if upkeep is not needed (should be false)
     }
+
+    /**
+     *  @dev This test ensures that the checkUpkeep function returns false if the raffle is not open.
+     */
+    function testCheckUpKeepReturnsFalseIfRaffleIsNotOpen() external {
+        // Arrange
+        vm.prank(PLAYER); // Start prank as the player
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
+
+        // Act
+        vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
+        vm.roll(block.number + 1); // Move to the next block
+        raffle.performUpkeep(""); // Perform upkeep to change the state to CALCULATING
+
+        (bool upkeepNeeded, ) = raffle.checkUpkeep(""); // Check if upkeep is needed
+
+        // Assert
+        assert(!upkeepNeeded); // Check if upkeep is not needed (should be false)
+    }
 }
