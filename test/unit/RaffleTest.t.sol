@@ -143,4 +143,19 @@ contract RaffleTest is Test {
         // Assert
         assert(!upkeepNeeded); // Check if upkeep is not needed (should be false)
     }
+
+    /**
+     *  @dev This test ensures that the checkUpkeep function returns false if the time interval has not passed.
+     */
+    function testPerformUpKeepCanOnlyRunIfCheckUpKeepIsTrue() external {
+        // Arrange
+        vm.prank(PLAYER); // Start prank as the player
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
+        vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
+        vm.roll(block.number + 1); // Move to the next block
+
+        // Act
+        // Assert
+        raffle.checkUpkeep(""); // Check if upkeep is needed
+    }
 }
