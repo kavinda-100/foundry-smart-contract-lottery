@@ -8,7 +8,7 @@ import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 
 contract RaffleTest is Test {
-    // State variables
+    // State variables ///////////////////////////////////////////////////////////////////////////////////////
     Raffle raffle; // Raffle contract instance
     HelperConfig helperConfig; // HelperConfig instance
     uint256 entranceFee; // Entrance fee for the raffle
@@ -20,14 +20,15 @@ contract RaffleTest is Test {
     bool enableNativePayment; // Flag to enable native payment
     address linkToken; // Address of the LINK token contract
 
-    // fake data for testing
+    // fake data for testing ///////////////////////////////////////////////////////////////////////////////////////
     address public PLAYER = makeAddr("player"); // Fake player address
     uint256 public constant STARTING_USER_BALANCE = 10 ether; // Starting balance for the player
     uint256 public constant ENTRANCE_FEE = 0.05 ether; // Entrance fee for the raffle
 
-    // Events for the tests
+    // Events for the tests ///////////////////////////////////////////////////////////////////////////////////////
     event RaffleEnter(address indexed player); // Event emitted when a player enters the raffle
 
+    //   // Set up function ///////////////////////////////////////////////////////////////////////////////////////
     function setUp() external {
         DeployRaffle deployRaffle = new DeployRaffle();
         (raffle, helperConfig) = deployRaffle.run();
@@ -45,6 +46,19 @@ contract RaffleTest is Test {
         // Fund the player with some ether
         vm.deal(PLAYER, STARTING_USER_BALANCE); // Give the player some ether
     }
+
+    // Modifiers ///////////////////////////////////////////////////////////////////////////////////////
+
+    /**@dev This modifier is used to set up the test environment for entering the raffle and passing the time interval.*/
+    modifier raffleEnterAndTimePassed() {
+        vm.prank(PLAYER); // Start prank as the player
+        raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
+        vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
+        vm.roll(block.number + 1); // Move to the next block
+        _; // Continue with the rest of the test
+    }
+
+    // Tests ///////////////////////////////////////////////////////////////////////////////////////
 
     /**
      *  @dev This test ensures that user can't enter the raffle without sending enough ETH.
