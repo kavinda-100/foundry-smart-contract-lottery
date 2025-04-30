@@ -163,6 +163,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return s_players; // Return the array of players' addresses
     }
 
+    function getPlayersArrayLength() public view returns (uint256) {
+        return s_players.length; // Return the length of the players array
+    }
+
     function getSinglePlayer(uint256 index) public view returns (address) {
         return s_players[index]; // Return the address of a single player at the given index
     }
@@ -173,5 +177,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function getRaffleState() public view returns (RaffleState) {
         return s_raffleState; // Return the current state of the raffle
+    }
+
+    function getLastTimeStamp() public view returns (uint256) {
+        return s_lastTimeStamp; // Return the last timestamp of the raffle
     }
 }

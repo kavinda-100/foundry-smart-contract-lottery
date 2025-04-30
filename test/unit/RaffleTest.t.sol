@@ -6,6 +6,7 @@ import {DeployRaffle} from "../../script/Raffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test {
@@ -213,5 +214,52 @@ contract RaffleTest is Test {
             0,
             address(raffle)
         ); // Attempt to fulfill random words (should revert)
+    }
+
+    function testFullFillRandomWordsPickWinnerRestAndSendMoney()
+        external
+        raffleEnterAndTimePassed
+        skipFork
+    {
+        // Arrange
+        address expectedWinner = address(1); // Expected winner address
+        uint256 additionalEntrance = 3; // Number of additional players to enter
+        uint256 startingIndex = 1; // Starting index for the additional players
+
+        for (
+            uint256 i = startingIndex;
+            i < (startingIndex + additionalEntrance);
+            i++
+        ) {
+            address player = address(uint160(i)); // Generate a fake player address
+            hoax(player, 1 ether); // Fake player address and fund them with entrance fee
+            raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
+        }
+
+        uint256 startingTimeStamp = raffle.getLastTimeStamp(); // Get the starting timestamp
+        uint256 startingBalance = expectedWinner.balance; // Get the starting balance of the expected winner
+
+        vm.recordLogs(); // Record logs for later verification
+        raffle.performUpkeep(""); // Perform upkeep to change the state to CALCULATING
+        Vm.Log[] memory entries = vm.getRecordedLogs(); // Get recorded logs
+        bytes32 requestId = entries[1].topics[1]; // Get the request ID from the logs
+
+        // Act
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(requestId), // Convert request ID to uint256
+            address(raffle)
+        );
+
+        // Assert
+        address recentWinner = raffle.getRecentWinner(); // Get the recent winner address
+        Raffle.RaffleState raffleState = raffle.getRaffleState(); // Get the current raffle state
+        uint256 winnerBalance = recentWinner.balance; // Get the winner's balance
+        uint256 endingTimestamp = raffle.getLastTimeStamp(); // Get the previous timestamp
+        uint256 prize = ENTRANCE_FEE * (additionalEntrance + 1); // Calculate the total prize amount
+
+        assert(recentWinner == expectedWinner); // Check if the recent winner matches the expected winner
+        assert(uint256(raffleState) == 0); // Check if the raffle state is OPEN (0)
+        assert(winnerBalance == startingBalance + prize); // Check if the winner's balance is correct
+        assert(endingTimestamp > startingTimeStamp); // Check if the ending timestamp is greater than the starting timestamp
     }
 }
