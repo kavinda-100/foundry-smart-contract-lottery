@@ -109,4 +109,19 @@ contract RaffleTest is Test {
         vm.prank(PLAYER); // Start prank as the player
         raffle.enterRaffle{value: ENTRANCE_FEE}(); // Attempt to enter the raffle again (should revert)
     }
+
+    /**
+     *  @dev This test ensures that the checkUpkeep function returns false if the raffle has no balance.
+     */
+    function testCheckUpKeepReturnFalseIfItHasNoBalance() external {
+        // Arrange
+        vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
+        vm.roll(block.number + 1); // Move to the next block
+
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep(""); // Check if upkeep is needed
+
+        // Assert
+        assert(!upkeepNeeded); // Check if upkeep is not needed (should be false)
+    }
 }
