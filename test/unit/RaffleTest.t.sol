@@ -6,6 +6,7 @@ import {DeployRaffle} from "../../script/Raffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test {
     // State variables ///////////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +57,14 @@ contract RaffleTest is Test {
         vm.warp(block.timestamp + interval + 1); // Move forward in time to trigger upkeep
         vm.roll(block.number + 1); // Move to the next block
         _; // Continue with the rest of the test
+    }
+
+    /**@dev This modifier is used to skip the forked network tests.*/
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        }
+        _;
     }
 
     // Tests ///////////////////////////////////////////////////////////////////////////////////////
@@ -187,5 +196,22 @@ contract RaffleTest is Test {
             )
         ); // Expect revert with custom error
         raffle.performUpkeep(""); // Attempt to perform upkeep (should revert)
+    }
+
+    /**
+     *  @dev This test ensures that the performUpkeep function can only be called when checkUpkeep returns true.
+     */
+    function testFullFillRandomWordsCanOnlyBeCalledAfterPerformUpkeep()
+        external
+        raffleEnterAndTimePassed
+        skipFork
+    {
+        // Arrange
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector); // Attempt to fulfill random words (should revert)
+        // Assert
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            0,
+            address(raffle)
+        ); // Attempt to fulfill random words (should revert)
     }
 }
