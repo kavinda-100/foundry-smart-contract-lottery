@@ -158,4 +158,26 @@ contract RaffleTest is Test {
         // Assert
         raffle.checkUpkeep(""); // Check if upkeep is needed
     }
+
+    /**
+     *  @dev This test ensures that the performUpkeep function reverts if checkUpkeep returns false.
+     *  It uses the `vm.expectRevert` function to expect a revert with the custom error `Raffle__UpkeepNotNeeded`.
+     */
+    function testPerformUpKeepRevertIfCheckUpKeepIsFalse() external {
+        // Arrange
+        uint256 currentBalance = 0; // Set current balance to 0
+        uint256 numPlayers = 0; // Set number of players to 0
+        uint256 raffleState = 0; // Set raffle state to 0 (OPEN)
+
+        // Act / Assert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__UpkeepNotNeeded.selector,
+                currentBalance,
+                numPlayers,
+                raffleState
+            )
+        ); // Expect revert with custom error
+        raffle.performUpkeep(""); // Attempt to perform upkeep (should revert)
+    }
 }
