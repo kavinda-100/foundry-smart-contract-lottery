@@ -226,13 +226,9 @@ contract RaffleTest is Test {
         uint256 additionalEntrance = 3; // Number of additional players to enter
         uint256 startingIndex = 1; // Starting index for the additional players
 
-        for (
-            uint256 i = startingIndex;
-            i < (startingIndex + additionalEntrance);
-            i++
-        ) {
+        for (uint256 i = startingIndex; i < additionalEntrance; i++) {
             address player = address(uint160(i)); // Generate a fake player address
-            hoax(player, 1 ether); // Fake player address and fund them with entrance fee
+            hoax(player, 10 ether); // Fake player address and fund them with entrance fee
             raffle.enterRaffle{value: ENTRANCE_FEE}(); // Player enters the raffle
         }
 
